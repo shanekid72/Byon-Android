@@ -1,0 +1,131 @@
+🌐 Platform Overview: D9 Platform Services (DPS)
+LuLu Money’s D9 Platform Services (DPS) offers a complete ecosystem for managing cross-border remittances. It supports:
+
+White-label models (agency based)
+
+Remittance-as-a-Service (RaaS) APIs
+
+Integration via API or DLT networks
+
+🔄 Transaction Flow Overview
+A standard transaction goes through:
+
+Create Quote – Locks exchange rate and fees
+
+Create Transaction – Submits sender/receiver details
+
+Confirm Transaction – Final authorization
+
+Authorize Clearance – Initiates actual payment
+
+Status Enquiry – Check current transaction status
+
+Cancel Transaction – If needed, cancel before processing
+
+Update Status – For external partners
+
+Transaction Receipt – Download invoice in base64
+
+🔐 Access & Security Requirements
+HTTPS with TLS 1.2 minimum
+
+IP/domain whitelisting
+
+Token-based access via /auth/realms/cdp/...
+
+Tokens expire in 15 minutes (900s)
+
+🧾 Main API Categories
+1. Authentication
+POST /auth/.../token – Get access token
+
+2. Quote & Transaction APIs
+POST /quote – Get rates, fees, and a quote ID
+
+POST /createtransaction – Create transaction using quote
+
+POST /confirmtransaction – Authorize created transaction
+
+POST /authorize-clearance – Finalize clearance
+
+GET /enquire-transaction?ref=... – Check status
+
+POST /canceltransaction – Cancel with reason code
+
+GET /transaction-receipt?ref=... – Download invoice
+
+PUT /status-update – Update status (from partner systems)
+
+🧠 Key Concepts
+Quote ID – Unique identifier for pricing & tracking
+
+Price Guarantee – Can be indicative or firm
+
+Service Types: C2C, C2B, B2B
+
+Receiving Modes: BANK, CASHPICKUP, MOBILEWALLET, etc.
+
+🧩 Important APIs
+Create Quote (Examples):
+Bank Transfer (PK):
+
+json
+Copy
+Edit
+{
+  "sending_country_code": "AE",
+  "receiving_country_code": "PK",
+  "sending_amount": 100,
+  "receiving_mode": "BANK",
+  "type": "SEND",
+  "instrument": "REMITTANCE"
+}
+Create Transaction:
+json
+Copy
+Edit
+{
+  "type": "SEND",
+  "sender": {
+    "customer_number": "1000001220000001"
+  },
+  "receiver": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "mobile_number": "+919876543210",
+    "bank_details": {
+      "account_number": "123456789",
+      "iso_code": "ABCXYZ"
+    }
+  },
+  "transaction": {
+    "quote_id": "1234567890123456"
+  }
+}
+💼 eKYC & Compliance
+Mandatory for white-label model (agent-based)
+
+Sender & receiver must pass AML & watchlist screening
+
+⚠️ Errors & Policies
+Includes general and business-specific error codes
+
+Token and API call misuse can lead to account lock
+
+Mandatory validation on fields like:
+
+Receiver name, account number
+
+Purpose of transaction
+
+Transaction reference IDs
+
+If you’d like this in a downloadable format (Word/Docx or Markdown), or need a specific section like payload fields or error codes, just let me know!
+
+
+
+
+
+
+
+
