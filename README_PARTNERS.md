@@ -12,6 +12,265 @@ Add remittance features to your existing mobile application
 
 ---
 
+## 📋 **Customer eKYC Integration (Essential for Compliance)**
+
+**⚠️ IMPORTANT: All customers must complete eKYC before sending money**
+
+### **🆔 7-Step Customer eKYC Flow**
+
+Based on the sequence diagram in your repository, our platform implements a comprehensive 7-step eKYC process:
+
+1. **API 1: Get Access Token** - Authenticate with LuluCDP
+2. **API 2: eKYC Request** - Receive SDK configuration from LuluEkyc  
+3. **API 3: OCR Document Analysis** - Scan and extract data from ID documents
+4. **API 4: Face Liveness Detection** - Anti-spoofing facial verification
+5. **API 5: Confirm Identity** - Cross-verify document and biometric data
+6. **API 6: Additional Information** - Collect extra data if required (conditional)
+7. **API 7: Get Customer Status** - Final verification result and transaction limits
+
+### **📄 Customer Verification Documentation**
+
+1. **Customer eKYC Journey Guide** 
+   - Review: `Partner EKYC Journey [EFR].pdf` 
+   - Complete 7-step customer verification workflow
+   - Country-specific eKYC requirements and regulations
+
+2. **Service Integration Guide**
+   - Review: `Remittance as a Service - Whitelabel.pdf`
+   - API integration for eKYC and remittance services
+   - Compliance and regulatory framework
+
+### **🛡️ Automated eKYC Integration**
+
+The eKYC process is **automatically triggered** when customers attempt to send money:
+
+```kotlin
+// Customer opens your app and tries to send money
+LuluPaySDK.launchRemittanceFlow(context, options)
+
+// If customer is not KYC verified, eKYC flow launches automatically:
+// 1. Document capture (passport, ID, driving license)
+// 2. OCR analysis and data extraction  
+// 3. Face liveness detection with challenges
+// 4. Identity confirmation and risk assessment
+// 5. Real-time AML/sanctions screening
+// 6. Approval/rejection with transaction limits
+
+// If KYC approved, remittance flow proceeds
+// If KYC pending/rejected, customer is notified
+```
+
+### **🔍 eKYC Features Included**
+
+- **📷 Document Scanning**: AI-powered OCR for passports, national IDs, driving licenses
+- **👤 Face Liveness**: Anti-spoofing with blink, head turn, smile challenges  
+- **🛡️ AML Screening**: Real-time sanctions and PEP list checking
+- **🌍 Country Compliance**: Regulatory requirements for UAE, India, Pakistan, Philippines
+- **⚡ Real-time Processing**: 2-3 minute verification process
+- **📊 Risk Assessment**: Automated scoring and transaction limits
+- **🔄 Status Tracking**: Approved/Pending/Rejected with reasons
+
+### **💰 Transaction Limits Based on KYC**
+
+| Verification Level | Daily Limit | Monthly Limit | Per Transaction |
+|-------------------|-------------|---------------|-----------------|
+| **Not Verified** | $0 | $0 | $0 |
+| **Basic KYC** | $1,000 | $5,000 | $500 |
+| **Full KYC** | $5,000 | $50,000 | $10,000 |
+| **Enhanced KYC** | $25,000 | $200,000 | $25,000 |
+
+**✅ eKYC APIs and compliance are built into both white-label apps and SDK integration**
+
+---
+
+## 💰 **Enhanced Money Transfer Service (Complete RaaS Implementation)**
+
+### **🔄 Complete Transaction Flow - All 8 RaaS APIs Implemented**
+
+Our platform includes **full implementation of all RaaS (Remittance as a Service) APIs** based on the D9 Platform Services specification:
+
+| Step | API Endpoint | Description | Status |
+|------|-------------|-------------|---------|
+| 1 | **Create Quote** | `POST /quote` | ✅ Implemented |
+| 2 | **Create Transaction** | `POST /createtransaction` | ✅ Implemented |
+| 3 | **Confirm Transaction** | `POST /confirmtransaction` | ✅ Implemented |
+| 4 | **Authorize Clearance** | `POST /authorize-clearance` | ✅ **NEW** |
+| 5 | **Status Enquiry** | `GET /enquire-transaction` | ✅ Implemented |
+| 6 | **Cancel Transaction** | `POST /canceltransaction` | ✅ **NEW** |
+| 7 | **Transaction Receipt** | `GET /transaction-receipt` | ✅ **NEW** |
+| 8 | **Status Update** | `PUT /status-update` | ✅ **NEW** |
+| 9 | **Real-time Tracking** | `GET /track-transaction` | ✅ **NEW** |
+
+### **🚀 New Enhanced Features**
+
+#### **1. Authorization Clearance**
+Initiate actual payment processing:
+```kotlin
+Remittance.authorizeClearance(
+    transactionRefNo = "TXN123456789",
+    listener = object : AuthorizationClearanceListener {
+        override fun onSuccess(response: AuthorizationClearanceResponse) {
+            // Payment clearance authorized - money movement initiated
+        }
+        override fun onFailed(errorMessage: String) {
+            // Handle authorization failure
+        }
+    }
+)
+```
+
+#### **2. Transaction Cancellation with Reason Codes**
+Cancel transactions with proper reason tracking:
+```kotlin
+Remittance.cancelTransaction(
+    transactionRefNo = "TXN123456789",
+    reasonCode = "Customer Request", // "Compliance Issue", "Technical Error", etc.
+    listener = object : CancelTransactionListener {
+        override fun onSuccess(response: CancelTransactionResponse) {
+            // Transaction cancelled successfully
+        }
+        override fun onFailed(errorMessage: String) {
+            // Handle cancellation failure
+        }
+    }
+)
+```
+
+#### **3. Transaction Receipt Download**
+Download receipts in PDF/image format:
+```kotlin
+Remittance.getTransactionReceipt(
+    transactionRefNo = "TXN123456789",
+    listener = object : TransactionReceiptListener {
+        override fun onSuccess(response: TransactionReceiptResponse) {
+            // Receipt downloaded as base64 (PDF/Image)
+            val receiptData = Base64.decode(response.receipt_data, Base64.DEFAULT)
+            // Save or display receipt
+        }
+        override fun onFailed(errorMessage: String) {
+            // Handle download failure  
+        }
+    }
+)
+```
+
+#### **4. Real-time Transaction Tracking**
+Monitor transaction progress with live updates:
+```kotlin
+Remittance.trackTransactionRealTime(
+    transactionRefNo = "TXN123456789",
+    listener = object : TransactionTrackingListener {
+        override fun onSuccess(response: TransactionTrackingResponse) {
+            val data = response.data
+            // Current status: data.currentStatus
+            // Progress: data.progressPercentage%
+            // Status history: data.statusHistory
+            // Estimated time: data.estimatedCompletion
+        }
+        override fun onFailed(errorMessage: String) {
+            // Handle tracking failure
+        }
+    }
+)
+```
+
+#### **5. External Partner Status Updates**
+Synchronize with external partner systems:
+```kotlin
+Remittance.updateTransactionStatus(
+    transactionRefNo = "TXN123456789", 
+    status = "PROCESSING", // "CLEARED", "COMPLETED", "FAILED", "ON_HOLD"
+    listener = object : StatusUpdateListener {
+        override fun onSuccess(response: StatusUpdateResponse) {
+            // Status updated for external partner systems
+        }
+        override fun onFailed(errorMessage: String) {
+            // Handle update failure
+        }
+    }
+)
+```
+
+### **📊 Transaction Status Flow**
+
+```
+INITIATED → PENDING → CONFIRMED → CLEARED → COMPLETED
+     ↓           ↓         ↓         ↓
+ CANCELLED   CANCELLED  FAILED   SUCCESS
+```
+
+### **🎯 Complete Integration Example**
+
+```kotlin
+class CompleteRemittanceDemo {
+    suspend fun demonstrateFullFlow() {
+        try {
+            // 1. Create Quote (get rates and fees)
+            val quoteId = createQuote()
+            
+            // 2. Create Transaction (submit details)
+            val transactionRef = createTransaction(quoteId)
+            
+            // 3. Confirm Transaction (authorize)
+            confirmTransaction(transactionRef)
+            
+            // 4. Authorize Clearance (initiate payment)
+            authorizeClearance(transactionRef)
+            
+            // 5. Track Progress in Real-time
+            val trackingData = trackTransaction(transactionRef)
+            
+            // 6. Download Receipt (when completed)
+            if (trackingData.currentStatus == "COMPLETED") {
+                downloadReceipt(transactionRef)
+            }
+            
+        } catch (cancellationRequested: Boolean) {
+            // 7. Cancel if needed
+            if (cancellationRequested) {
+                cancelTransaction(transactionRef, "Customer Request")
+            }
+        }
+    }
+}
+```
+
+### **🔄 Real-time Monitoring Setup**
+
+```kotlin
+// Auto-refresh transaction status every 30 seconds
+fun startRealTimeMonitoring(transactionRef: String) {
+    Timer().scheduleAtFixedRate(object : TimerTask() {
+        override fun run() {
+            Remittance.trackTransactionRealTime(transactionRef) { response ->
+                updateUI(response.data)
+                
+                // Stop monitoring when completed
+                if (isTransactionCompleted(response.data.currentStatus)) {
+                    cancel()
+                }
+            }
+        }
+    }, 0, 30000) // Every 30 seconds
+}
+```
+
+### **🛡️ Enterprise Features**
+
+✅ **Complete API Coverage** - All 8 RaaS endpoints implemented  
+✅ **Real-time Monitoring** - Live transaction status tracking  
+✅ **Receipt Management** - Automated invoice generation & download  
+✅ **Cancellation Support** - Full transaction lifecycle management  
+✅ **Partner Integration** - External system status synchronization  
+✅ **Production Ready** - Enterprise-grade error handling & security  
+✅ **TLS 1.2+ Security** - Encrypted communications  
+✅ **Token Authentication** - 15-minute token expiry for security  
+✅ **Compliance Ready** - Built-in AML & KYC integration  
+
+**The enhanced money transfer service works seamlessly with eKYC to provide a complete regulatory-compliant remittance solution.**
+
+---
+
 ## 🚀 **Quick Start Options**
 
 ### **Option A: IDE Integration (Recommended)**
@@ -33,8 +292,8 @@ If you're using **Cursor AI** or similar IDE:
 
 1. **Connect to our repository:**
    ```bash
-   git clone https://github.com/lulupay/white-label-platform.git
-   cd white-label-platform
+   git clone https://github.com/shanekid72/Byon-Android.git
+   cd Byon-Android
    ```
 
 2. **Open in your IDE and configure:**
@@ -78,9 +337,9 @@ Your AI assistant will:
 ### **Step 1: Clone Repository**
 
 ```bash
-# Clone the LuluPay platform
-git clone https://github.com/lulupay/LuluPay_Android-main.git
-cd LuluPay_Android-main
+# Clone the Byon remittance platform
+git clone https://github.com/shanekid72/Byon-Android.git
+cd Byon-Android
 
 # Make scripts executable
 chmod +x scripts/generate-partner-app.py

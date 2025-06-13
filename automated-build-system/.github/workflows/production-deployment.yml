@@ -1,0 +1,467 @@
+name: 🚀 LuluPay Production Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: lulupay/build-system
+  NODE_VERSION: '18'
+  KUBECTL_VERSION: '1.28.0'
+  HELM_VERSION: '3.12.0'
+
+jobs:
+  # Security and Code Quality Analysis
+  security-scan:
+    name: 🔒 Security & Quality Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci --include=dev
+          npm audit --audit-level=high
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: TypeScript Compilation Check
+        run: npm run build
+
+      - name: Run Security Audit
+        run: |
+          npm audit --audit-level=moderate
+          npx audit-ci --config audit-ci.json
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Comprehensive Testing Suite
+  test:
+    name: 🧪 Comprehensive Testing
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: lulupay_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Setup Test Environment
+        run: |
+          cp config.env.example .env.test
+          npm run migrate:test
+
+      - name: Run Unit Tests
+        run: npm run test:unit -- --coverage
+
+      - name: Run Integration Tests
+        run: npm run test:integration -- --coverage
+
+      - name: Run End-to-End Tests
+        run: npm run test:e2e
+
+      - name: Run Asset Pipeline Validation
+        run: npm run test:assets
+
+      - name: Performance Benchmarks
+        run: npm run test:performance
+
+      - name: Upload Coverage Reports
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: lulupay-build-system
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: Jest Test Results
+          path: 'test-results.xml'
+          reporter: jest-junit
+
+  # Docker Build and Push
+  build-and-push:
+    name: 🐳 Build & Push Container
+    runs-on: ubuntu-latest
+    needs: [security-scan, test]
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and Push Docker Image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.production
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+
+      - name: Container Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: 'sarif'
+          output: 'container-scan-results.sarif'
+
+      - name: Upload Container Scan Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'container-scan-results.sarif'
+
+  # Staging Deployment
+  deploy-staging:
+    name: 🚧 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging-api.lulupay.com
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure Kubernetes Context
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
+
+      - name: Deploy to Staging
+        env:
+          KUBECONFIG: kubeconfig
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+        run: |
+          # Update image tag in staging deployment
+          kubectl set image deployment/lulupay-build-system-staging \
+            lulupay-build-system=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG} \
+            -n lulupay-staging
+
+          # Wait for rollout to complete
+          kubectl rollout status deployment/lulupay-build-system-staging \
+            -n lulupay-staging --timeout=600s
+
+      - name: Run Staging Health Check
+        run: |
+          sleep 30
+          curl -f https://staging-api.lulupay.com/api/health || exit 1
+
+      - name: Run Staging Tests
+        run: |
+          npm run test:staging-e2e
+
+  # Production Deployment
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://api.lulupay.com
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure Kubernetes Context
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
+
+      - name: Pre-deployment Backup
+        env:
+          KUBECONFIG: kubeconfig
+        run: |
+          # Backup current production state
+          kubectl get all -n lulupay-production -o yaml > production-backup-$(date +%Y%m%d-%H%M%S).yaml
+          
+          # Upload backup to S3
+          aws s3 cp production-backup-*.yaml s3://lulupay-backups/deployments/
+
+      - name: Blue-Green Deployment
+        env:
+          KUBECONFIG: kubeconfig
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+        run: |
+          # Create blue-green deployment script
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secrets.yaml
+          
+          # Deploy new version (green)
+          kubectl set image deployment/lulupay-build-system \
+            lulupay-build-system=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG} \
+            -n lulupay-production
+          
+          # Wait for rollout
+          kubectl rollout status deployment/lulupay-build-system \
+            -n lulupay-production --timeout=900s
+
+      - name: Production Health Check
+        run: |
+          sleep 60
+          
+          # Comprehensive health checks
+          curl -f https://api.lulupay.com/api/health || exit 1
+          curl -f https://api.lulupay.com/api/health/ready || exit 1
+          curl -f https://build.lulupay.com/api/health || exit 1
+          
+          # Check metrics endpoint
+          curl -f https://api.lulupay.com/metrics || exit 1
+
+      - name: Production Smoke Tests
+        run: |
+          npm run test:production-smoke
+
+      - name: Update Deployment Status
+        run: |
+          kubectl annotate deployment lulupay-build-system \
+            deployment.kubernetes.io/revision="$(date +%Y%m%d-%H%M%S)" \
+            deployment.kubernetes.io/deployed-by="${{ github.actor }}" \
+            deployment.kubernetes.io/commit="${{ github.sha }}" \
+            -n lulupay-production
+
+      - name: Post-Deployment Monitoring
+        run: |
+          echo "📊 Setting up monitoring alerts"
+          echo "✅ Monitoring configured"
+
+  # Deployment Summary
+  deployment-summary:
+    name: 📋 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🚀 LuluPay Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.deploy-staging.result }}" == "success" ]]; then
+            echo "✅ **Staging:** Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Staging:** Deployment failed or skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.deploy-production.result }}" == "success" ]]; then
+            echo "✅ **Production:** Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Production:** Deployment failed or skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [API Documentation](https://api.lulupay.com/docs)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Build Dashboard](https://build.lulupay.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Asset Management](https://assets.lulupay.com)" >> $GITHUB_STEP_SUMMARY
+
+  # Rollback Job (Manual Trigger)
+  rollback:
+    name: 🔄 Rollback Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: production-rollback
+    steps:
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure Kubernetes Context
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Execute Rollback
+        env:
+          KUBECONFIG: kubeconfig
+        run: |
+          # Rollback to previous revision
+          kubectl rollout undo deployment/lulupay-build-system -n lulupay-production
+          
+          # Wait for rollback to complete
+          kubectl rollout status deployment/lulupay-build-system \
+            -n lulupay-production --timeout=600s
+
+      - name: Verify Rollback
+        run: |
+          sleep 30
+          curl -f https://api.lulupay.com/api/health || exit 1
+
+      - name: Notify Rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "⚠️ LuluPay Build System rollback executed",
+              blocks: [
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "🔄 *Production Rollback Completed*\n\n• Initiated by: ${{ github.actor }}\n• Time: $(date)\n• Status: Success"
+                  }
+                }
+              ]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }} 

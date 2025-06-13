@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lulupay-production
+  labels:
+    name: lulupay-production
+    environment: production
+    app: lulupay-build-system
+    version: "4.0.0"
+  annotations:
+    description: "LuluPay Android White-Label Build System - Production Environment"
+    owner: "DevOps Team"
+    contact: "devops@lulupay.com"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lulupay-staging
+  labels:
+    name: lulupay-staging
+    environment: staging
+    app: lulupay-build-system
+    version: "4.0.0"
+  annotations:
+    description: "LuluPay Android White-Label Build System - Staging Environment"
+    owner: "DevOps Team"
+    contact: "devops@lulupay.com" 

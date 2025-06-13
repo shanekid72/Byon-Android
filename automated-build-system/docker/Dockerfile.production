@@ -1,0 +1,90 @@
+# Multi-stage production Dockerfile for LuluPay Build System
+# Stage 1: Build dependencies and compile TypeScript
+FROM node:18-alpine AS dependencies
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies for Sharp and other native modules
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    vips-dev \
+    libc6-compat
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies with production optimizations
+RUN npm ci --only=production --frozen-lockfile --no-audit --no-fund
+
+# Install dev dependencies for building
+COPY package*.json ./
+RUN npm ci --include=dev --frozen-lockfile --no-audit --no-fund
+
+# Copy source code
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+
+# Build TypeScript
+RUN npm run build
+
+# Stage 2: Production runtime
+FROM node:18-alpine AS production
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV LOG_LEVEL=info
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S lulupay && \
+    adduser -S lulupay -u 1001 -G lulupay
+
+# Install runtime dependencies only
+RUN apk add --no-cache \
+    dumb-init \
+    vips \
+    tini \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy built application from dependencies stage
+COPY --from=dependencies /app/dist ./dist
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/package*.json ./
+
+# Copy configuration and templates
+COPY templates/ ./templates/
+COPY config/ ./config/
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/storage/builds /app/storage/temp /app/storage/assets /app/logs && \
+    chown -R lulupay:lulupay /app
+
+# Switch to non-root user
+USER lulupay
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/api/health || exit 1
+
+# Expose port
+EXPOSE ${PORT}
+
+# Use tini as init system
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start application
+CMD ["node", "dist/index.js"]
+
+# Labels for metadata
+LABEL maintainer="LuluPay DevOps <devops@lulupay.com>"
+LABEL version="4.0.0"
+LABEL description="LuluPay Android White-Label Build System - Production"
+LABEL org.opencontainers.image.source="https://github.com/lulupay/android-build-system" 

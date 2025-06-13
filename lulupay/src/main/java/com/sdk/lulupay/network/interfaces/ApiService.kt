@@ -118,7 +118,7 @@ interface ApiService {
    * @param request Authorization clearance details
    * @return Response with clearance status
    */
-  @POST("amr/ras/authorize-clearance")
+  @POST("/amr/ras/api/v1_0/ras/authorize-clearance")
   fun authorizeClearance(
       @Header("Authorization") authorization: String,
       @Header("X-REQUEST-ID") requestId: String,
@@ -206,7 +206,7 @@ interface ApiService {
    * @param request Cancel transaction details
    * @return Response with cancellation status
    */
-  @POST("api/v1_0/ras/canceltransaction")
+  @POST("/amr/ras/api/v1_0/ras/canceltransaction")
   fun cancelTransaction(
       @Header("Authorization") authorization: String,
       @Header("X-REQUEST-ID") requestId: String,
@@ -228,8 +228,8 @@ interface ApiService {
    * @param request Status update details
    * @return Response with update status
    */
-  @PUT("api/v1_0/paas/status-update")
-  fun updateStatus(
+  @PUT("/amr/ras/api/v1_0/ras/status-update")
+  fun updateTransactionStatus(
       @Header("Authorization") authorization: String,
       @Header("X-REQUEST-ID") requestId: String,
       @Header("sender") sender: String? = null,
@@ -519,4 +519,18 @@ interface ApiService {
       @Query("middle_name") middle_name: String? = null,
       @Query("last_name") last_name: String? = null
   ): Call<AccountValidationResponse>
+
+  /**
+   * Real-time transaction status tracking
+   * @param authorization Bearer token for authentication
+   * @param requestId Unique request identifier
+   * @param transactionRefNumber Transaction reference number
+   * @return Response with real-time status updates
+   */
+  @GET("/amr/ras/api/v1_0/ras/track-transaction")
+  fun trackTransactionRealTime(
+      @Header("Authorization") authorization: String,
+      @Header("X-REQUEST-ID") requestId: String,
+      @Query("transaction_ref_number") transactionRefNumber: String
+  ): Call<TransactionTrackingResponse>
 }

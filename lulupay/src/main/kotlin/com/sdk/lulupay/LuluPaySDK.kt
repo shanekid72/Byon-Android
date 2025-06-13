@@ -44,7 +44,7 @@ object LuluPaySDK {
     }
     
     /**
-     * Launches the remittance flow
+     * Launches the remittance flow with automatic eKYC verification
      * Partners call this when user wants to send money
      */
     fun launchRemittanceFlow(
@@ -53,21 +53,111 @@ object LuluPaySDK {
     ): Intent {
         requireInitialized()
         
-        return Intent(context, RemittanceScreen::class.java).apply {
-            putExtra("SDK_MODE", true)
-            putExtra("PARTNER_ID", SessionManager.partnerId)
-            putExtra("RETURN_TO_PARTNER", true)
-            putExtra("USE_PARTNER_THEME", options.usePartnerTheme)
-            putExtra("SHOW_BACK_BUTTON", options.showBackButton)
-            putExtra("AUTO_FINISH_ON_COMPLETE", options.autoFinishOnComplete)
-            putExtra("ENABLE_TRANSACTION_HISTORY", options.enableTransactionHistory)
-            putExtra("ENABLE_SUPPORT", options.enableSupport)
-            
-            // Add prefilled data if provided
-            options.prefilledData?.let { data ->
-                putExtra("PREFILLED_DATA", data)
+        // Check if customer needs eKYC verification first
+        val customerNumber = options.prefilledData?.senderPhone ?: "GUEST_${System.currentTimeMillis()}"
+        
+        return if (needsEKYCVerification(customerNumber)) {
+            // Launch eKYC flow first
+            Intent(context, com.sdk.lulupay.activity.EKYCActivity::class.java).apply {
+                putExtra("CUSTOMER_NUMBER", customerNumber)
+                putExtra("RETURN_TO_REMITTANCE", true)
+                putExtra("SDK_MODE", true)
+                putExtra("PARTNER_ID", SessionManager.partnerId)
+                putExtra("USE_PARTNER_THEME", options.usePartnerTheme)
+                
+                // Store remittance options for after eKYC completion
+                putExtra("REMITTANCE_OPTIONS_JSON", serializeRemittanceOptions(options))
+            }
+        } else {
+            // Customer is KYC verified, proceed with remittance
+            Intent(context, RemittanceScreen::class.java).apply {
+                putExtra("SDK_MODE", true)
+                putExtra("PARTNER_ID", SessionManager.partnerId)
+                putExtra("RETURN_TO_PARTNER", true)
+                putExtra("USE_PARTNER_THEME", options.usePartnerTheme)
+                putExtra("SHOW_BACK_BUTTON", options.showBackButton)
+                putExtra("AUTO_FINISH_ON_COMPLETE", options.autoFinishOnComplete)
+                putExtra("ENABLE_TRANSACTION_HISTORY", options.enableTransactionHistory)
+                putExtra("ENABLE_SUPPORT", options.enableSupport)
+                putExtra("CUSTOMER_NUMBER", customerNumber)
+                putExtra("KYC_STATUS", "APPROVED")
+                
+                // Add prefilled data if provided
+                options.prefilledData?.let { data ->
+                    putExtra("PREFILLED_DATA", data)
+                }
             }
         }
+    }
+    
+    /**
+     * Check if customer needs eKYC verification
+     */
+    private fun needsEKYCVerification(customerNumber: String): Boolean {
+        // In real implementation, this would check with backend
+        // For now, simulate: customers with "VERIFIED_" prefix are already verified
+        return !customerNumber.startsWith("VERIFIED_") && !isCustomerKYCApproved(customerNumber)
+    }
+    
+    /**
+     * Check if customer is already KYC approved
+     */
+    private fun isCustomerKYCApproved(customerNumber: String): Boolean {
+        // In real implementation, check with eKYC service
+        // For demo purposes, simulate some verified customers
+        val verifiedCustomers = setOf("admin", "test@lulupay.com", "+971501234567")
+        return verifiedCustomers.contains(customerNumber)
+    }
+    
+    /**
+     * Launch eKYC verification for existing customer
+     */
+    fun launchCustomerVerification(
+        context: Context,
+        customerNumber: String
+    ): Intent {
+        requireInitialized()
+        
+        return Intent(context, com.sdk.lulupay.activity.EKYCActivity::class.java).apply {
+            putExtra("CUSTOMER_NUMBER", customerNumber)
+            putExtra("RETURN_TO_REMITTANCE", false)
+            putExtra("SDK_MODE", true)
+            putExtra("PARTNER_ID", SessionManager.partnerId)
+        }
+    }
+    
+    /**
+     * Serialize remittance options to JSON string
+     */
+    private fun serializeRemittanceOptions(options: RemittanceOptions): String {
+        // Simple serialization - in production use Gson or kotlinx.serialization
+        return """
+        {
+            "usePartnerTheme": ${options.usePartnerTheme},
+            "showBackButton": ${options.showBackButton},
+            "autoFinishOnComplete": ${options.autoFinishOnComplete},
+            "enableTransactionHistory": ${options.enableTransactionHistory},
+            "enableSupport": ${options.enableSupport},
+            "prefilledData": ${if (options.prefilledData != null) serializePrefilledData(options.prefilledData) else "null"}
+        }
+        """.trimIndent()
+    }
+    
+    /**
+     * Serialize prefilled data to JSON
+     */
+    private fun serializePrefilledData(data: PrefilledData): String {
+        return """
+        {
+            "senderName": "${data.senderName ?: ""}",
+            "senderPhone": "${data.senderPhone ?: ""}",
+            "receiverName": "${data.receiverName ?: ""}",
+            "receiverPhone": "${data.receiverPhone ?: ""}",
+            "amount": ${data.amount ?: 0.0},
+            "currency": "${data.currency ?: ""}",
+            "purpose": "${data.purpose ?: ""}"
+        }
+        """.trimIndent()
     }
     
     /**

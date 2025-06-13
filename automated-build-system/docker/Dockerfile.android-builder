@@ -1,0 +1,128 @@
+# LuluPay Android Builder Docker Image
+# Optimized for white-label Android app builds
+FROM openjdk:11-jdk-slim
+
+LABEL maintainer="LuluPay Dev Team <dev@lulupay.com>"
+LABEL description="LuluPay Android White-label App Builder"
+LABEL version="1.0.0"
+
+# Set environment variables
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${ANDROID_SDK_ROOT}/build-tools/34.0.0
+ENV GRADLE_HOME=/opt/gradle
+ENV PATH=${PATH}:${GRADLE_HOME}/bin
+ENV GRADLE_USER_HOME=/gradle-cache
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    curl \
+    git \
+    build-essential \
+    python3 \
+    python3-pip \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directories
+RUN mkdir -p ${ANDROID_SDK_ROOT} \
+    && mkdir -p /workspace \
+    && mkdir -p /gradle-cache \
+    && mkdir -p /build-cache \
+    && mkdir -p /keystore
+
+# Download and install Android SDK Command Line Tools
+RUN wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip \
+    && unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_SDK_ROOT} \
+    && mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools/latest \
+    && mv ${ANDROID_SDK_ROOT}/cmdline-tools/* ${ANDROID_SDK_ROOT}/cmdline-tools/latest/ \
+    && rm /tmp/cmdline-tools.zip
+
+# Download and install Gradle
+RUN wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip \
+    && unzip -q /tmp/gradle.zip -d /opt \
+    && mv /opt/gradle-8.5 ${GRADLE_HOME} \
+    && rm /tmp/gradle.zip
+
+# Accept Android SDK licenses
+RUN yes | sdkmanager --licenses
+
+# Install Android SDK components
+RUN sdkmanager --update
+RUN sdkmanager \
+    "platform-tools" \
+    "build-tools;34.0.0" \
+    "build-tools;33.0.2" \
+    "platforms;android-34" \
+    "platforms;android-33" \
+    "platforms;android-32" \
+    "platforms;android-31" \
+    "cmdline-tools;latest" \
+    "emulator" \
+    "system-images;android-34;google_apis;x86_64"
+
+# Install additional build tools
+RUN sdkmanager \
+    "extras;android;m2repository" \
+    "extras;google;m2repository" \
+    "extras;google;google_play_services" \
+    "add-ons;addon-google_apis-google-24"
+
+# Install Firebase CLI for push notifications
+RUN npm install -g firebase-tools
+
+# Install Python dependencies for build scripts
+RUN pip3 install requests pyyaml pillow
+
+# Create build user
+RUN groupadd -r builduser && useradd -r -g builduser builduser
+RUN chown -R builduser:builduser /workspace /gradle-cache /build-cache
+
+# Copy build scripts
+COPY scripts/build-android.sh /usr/local/bin/build-android.sh
+COPY scripts/build-utils.sh /usr/local/bin/build-utils.sh
+COPY scripts/validate-build.sh /usr/local/bin/validate-build.sh
+RUN chmod +x /usr/local/bin/*.sh
+
+# Copy LuluPay SDK and dependencies
+COPY sdk/lulupay-android-sdk.aar /opt/lulupay-sdk/
+COPY sdk/dependencies.gradle /opt/lulupay-sdk/
+
+# Set working directory
+WORKDIR /workspace
+
+# Create gradle.properties for optimization
+RUN echo "org.gradle.daemon=false" >> /gradle-cache/gradle.properties \
+    && echo "org.gradle.parallel=true" >> /gradle-cache/gradle.properties \
+    && echo "org.gradle.workers.max=4" >> /gradle-cache/gradle.properties \
+    && echo "org.gradle.configureondemand=true" >> /gradle-cache/gradle.properties \
+    && echo "org.gradle.caching=true" >> /gradle-cache/gradle.properties \
+    && echo "android.useAndroidX=true" >> /gradle-cache/gradle.properties \
+    && echo "android.enableJetifier=true" >> /gradle-cache/gradle.properties
+
+# Pre-download common Gradle dependencies
+RUN mkdir -p /tmp/warmup-project \
+    && cd /tmp/warmup-project \
+    && echo 'plugins { id "com.android.application" version "8.1.2"; id "org.jetbrains.kotlin.android" version "1.9.10" }' > build.gradle \
+    && echo 'android { compileSdk 34; defaultConfig { minSdk 24; targetSdk 34 } }' >> build.gradle \
+    && echo 'dependencies { implementation "androidx.core:core-ktx:1.12.0" }' >> build.gradle \
+    && gradle dependencies --no-daemon || true \
+    && cd / \
+    && rm -rf /tmp/warmup-project
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD gradle --version && adb version
+
+# Switch to build user
+USER builduser
+
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/build-android.sh"]
+CMD ["--help"]
+
+# Expose ports for debugging (optional)
+EXPOSE 5037 8080 

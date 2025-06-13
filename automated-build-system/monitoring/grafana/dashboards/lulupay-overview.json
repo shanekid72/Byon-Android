@@ -1,0 +1,499 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "LuluPay Build System - Overview",
+    "tags": ["lulupay", "builds", "analytics"],
+    "style": "dark",
+    "timezone": "browser",
+    "editable": true,
+    "hideControls": false,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+    },
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Overview",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(lulupay_builds_total)",
+            "refId": "A",
+            "legendFormat": "Total Builds"
+          },
+          {
+            "expr": "sum(lulupay_partners_total)",
+            "refId": "B", 
+            "legendFormat": "Total Partners"
+          },
+          {
+            "expr": "sum(lulupay_assets_processed_total)",
+            "refId": "C",
+            "legendFormat": "Assets Processed"
+          },
+          {
+            "expr": "lulupay_active_builds",
+            "refId": "D",
+            "legendFormat": "Active Builds"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 80}
+              ]
+            },
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "displayMode": "list",
+              "orientation": "horizontal"
+            }
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Build Success Rate",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "(sum(rate(lulupay_builds_total{status=\"completed\"}[5m])) / sum(rate(lulupay_builds_total[5m]))) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 80},
+                {"color": "green", "value": 95}
+              ]
+            },
+            "color": {"mode": "thresholds"},
+            "min": 0,
+            "max": 100,
+            "unit": "percent"
+          }
+        },
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 3,
+        "title": "Average Build Time",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, rate(lulupay_build_duration_seconds_bucket[5m]))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 300},
+                {"color": "red", "value": 600}
+              ]
+            },
+            "color": {"mode": "thresholds"},
+            "min": 0,
+            "max": 1800,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "System CPU Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "lulupay_system_cpu_usage_percent",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 70},
+                {"color": "red", "value": 90}
+              ]
+            },
+            "color": {"mode": "thresholds"},
+            "min": 0,
+            "max": 100,
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "System Memory Usage",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+        "targets": [
+          {
+            "expr": "(lulupay_system_memory_usage_bytes{type=\"used\"} / lulupay_system_memory_usage_bytes{type=\"total\"}) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 75},
+                {"color": "red", "value": 90}
+              ]
+            },
+            "color": {"mode": "thresholds"},
+            "min": 0,
+            "max": 100,
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Build Rate (per minute)",
+        "type": "graph",
+        "gridPos": {"h": 9, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(lulupay_builds_total[1m]) * 60",
+            "refId": "A",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "xAxis": {"show": true},
+        "yAxes": [
+          {
+            "label": "builds/min",
+            "show": true,
+            "min": 0
+          }
+        ],
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "pointradius": 2,
+        "points": false,
+        "stack": false,
+        "percentage": false,
+        "nullPointMode": "null"
+      },
+      {
+        "id": 7,
+        "title": "Active Builds by Partner",
+        "type": "graph",
+        "gridPos": {"h": 9, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "lulupay_active_builds",
+            "refId": "A",
+            "legendFormat": "Partner {{partner_id}}"
+          }
+        ],
+        "xAxis": {"show": true},
+        "yAxes": [
+          {
+            "label": "active builds",
+            "show": true,
+            "min": 0
+          }
+        ],
+        "legend": {
+          "avg": false,
+          "current": true,
+          "max": false,
+          "min": false,
+          "show": true,
+          "total": false,
+          "values": true
+        },
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "stack": true
+      },
+      {
+        "id": 8,
+        "title": "Build Duration Distribution",
+        "type": "heatmap",
+        "gridPos": {"h": 9, "w": 12, "x": 0, "y": 25},
+        "targets": [
+          {
+            "expr": "rate(lulupay_build_duration_seconds_bucket[5m])",
+            "refId": "A",
+            "format": "heatmap",
+            "legendFormat": "{{le}}"
+          }
+        ],
+        "heatmap": {
+          "xAxis": {
+            "show": true
+          },
+          "yAxis": {
+            "show": true,
+            "label": "Duration (seconds)",
+            "logBase": 1,
+            "max": null,
+            "min": null
+          },
+          "colorScale": "linear",
+          "colorScheme": "interpolateSpectral"
+        }
+      },
+      {
+        "id": 9,
+        "title": "Asset Processing Stats",
+        "type": "table",
+        "gridPos": {"h": 9, "w": 12, "x": 12, "y": 25},
+        "targets": [
+          {
+            "expr": "sum by (asset_type, format) (lulupay_assets_processed_total)",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "avg by (asset_type, format) (lulupay_asset_compression_ratio)",
+            "refId": "B",
+            "format": "table",
+            "instant": true
+          },
+          {
+            "expr": "avg by (asset_type, format) (lulupay_asset_quality_score)",
+            "refId": "C",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "styles": [
+          {
+            "alias": "Asset Type",
+            "colorMode": null,
+            "colors": [],
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "decimals": 2,
+            "link": false,
+            "mappingType": 1,
+            "pattern": "asset_type",
+            "thresholds": [],
+            "type": "string",
+            "unit": "short"
+          },
+          {
+            "alias": "Format",
+            "colorMode": null,
+            "colors": [],
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "decimals": 2,
+            "link": false,
+            "mappingType": 1,
+            "pattern": "format",
+            "thresholds": [],
+            "type": "string",
+            "unit": "short"
+          },
+          {
+            "alias": "Total Processed",
+            "colorMode": null,
+            "colors": [],
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "decimals": 0,
+            "link": false,
+            "mappingType": 1,
+            "pattern": "Value #A",
+            "thresholds": [],
+            "type": "number",
+            "unit": "short"
+          },
+          {
+            "alias": "Avg Compression",
+            "colorMode": "value",
+            "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "decimals": 2,
+            "link": false,
+            "mappingType": 1,
+            "pattern": "Value #B",
+            "thresholds": [1.5, 2.0],
+            "type": "number",
+            "unit": "short"
+          },
+          {
+            "alias": "Avg Quality",
+            "colorMode": "value",
+            "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+            "dateFormat": "YYYY-MM-DD HH:mm:ss",
+            "decimals": 1,
+            "link": false,
+            "mappingType": 1,
+            "pattern": "Value #C",
+            "thresholds": [80, 90],
+            "type": "number",
+            "unit": "short"
+          }
+        ],
+        "transform": "table",
+        "pageSize": 10,
+        "showHeader": true,
+        "columns": [],
+        "scroll": true,
+        "fontSize": "100%",
+        "sort": {"col": 2, "desc": true}
+      },
+      {
+        "id": 10,
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 34},
+        "targets": [
+          {
+            "expr": "sum(rate(lulupay_http_requests_total[5m])) by (method)",
+            "refId": "A",
+            "legendFormat": "{{method}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "requests/sec",
+            "show": true,
+            "min": 0
+          }
+        ],
+        "legend": {
+          "show": true,
+          "values": true,
+          "current": true
+        }
+      },
+      {
+        "id": 11,
+        "title": "HTTP Response Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 34},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(lulupay_http_request_duration_seconds_bucket[5m]))",
+            "refId": "A",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(lulupay_http_request_duration_seconds_bucket[5m]))",
+            "refId": "B",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "seconds",
+            "show": true,
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 34},
+        "targets": [
+          {
+            "expr": "(sum(rate(lulupay_http_requests_total{status_code=~\"4..|5..\"}[5m])) / sum(rate(lulupay_http_requests_total[5m]))) * 100",
+            "refId": "A",
+            "legendFormat": "HTTP Error Rate"
+          },
+          {
+            "expr": "(sum(rate(lulupay_builds_total{status=\"failed\"}[5m])) / sum(rate(lulupay_builds_total[5m]))) * 100",
+            "refId": "B",
+            "legendFormat": "Build Error Rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "error rate (%)",
+            "show": true,
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 5,
+            "colorMode": "critical",
+            "op": "gt",
+            "fill": true,
+            "line": true
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": false,
+  "inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "value": "prometheus"
+    }
+  ],
+  "folderId": 0,
+  "folderTitle": "General"
+} 

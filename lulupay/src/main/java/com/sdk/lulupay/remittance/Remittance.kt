@@ -1573,5 +1573,250 @@ class Remittance {
         listener.onFailed("Unexpected error: ${e.message}")
       }
     }
+
+    /**
+     * Authorizes clearance for a transaction to initiate actual payment
+     * @param transactionRefNo Transaction reference number
+     * @param listener Callback interface to handle success/failure responses
+     */
+    suspend fun authorizeClearance(
+        transactionRefNo: String,
+        listener: AuthorizationClearanceListener
+    ) {
+        try {
+            val apiService = RetrofitClient.retrofit.create(ApiService::class.java)
+            
+            val request = AuthorizationClearanceRequest(
+                transaction_ref_number = transactionRefNo
+            )
+            
+            // Get access token
+            val token: String = getAccessTokenForTransaction()
+            
+            val response = withContext(Dispatchers.IO) {
+                apiService.authorizeClearance(
+                    authorization = "Bearer $token",
+                    requestId = (SessionManager.username ?: "") + "-" + RequestId.generateRequestId(),
+                    sender = SessionManager.username ?: "",
+                    request = request
+                ).execute()
+            }
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                if (responseBody != null) {
+                    listener.onSuccess(responseBody)
+                } else {
+                    listener.onFailed("Response body is null")
+                }
+            } else {
+                listener.onFailed("Error: ${response.errorBody()?.string() ?: "Unknown error"}")
+            }
+        } catch (e: Exception) {
+            listener.onFailed("Unexpected error: ${e.message}")
+        }
+    }
+    
+    /**
+     * Cancels a transaction with reason code
+     * @param transactionRefNo Transaction reference number
+     * @param reasonCode Reason for cancellation
+     * @param listener Callback interface to handle success/failure responses
+     */
+    suspend fun cancelTransaction(
+        transactionRefNo: String,
+        reasonCode: String,
+        listener: CancelTransactionListener
+    ) {
+        try {
+            val apiService = RetrofitClient.retrofit.create(ApiService::class.java)
+            
+            val request = CancelTransactionRequest(
+                transaction_ref_number = transactionRefNo,
+                reason_code = reasonCode
+            )
+            
+            // Get access token
+            val token: String = getAccessTokenForTransaction()
+            
+            val response = withContext(Dispatchers.IO) {
+                apiService.cancelTransaction(
+                    authorization = "Bearer $token",
+                    requestId = (SessionManager.username ?: "") + "-" + RequestId.generateRequestId(),
+                    sender = SessionManager.username ?: "",
+                    request = request
+                ).execute()
+            }
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                if (responseBody != null) {
+                    listener.onSuccess(responseBody)
+                } else {
+                    listener.onFailed("Response body is null")
+                }
+            } else {
+                listener.onFailed("Error: ${response.errorBody()?.string() ?: "Unknown error"}")
+            }
+        } catch (e: Exception) {
+            listener.onFailed("Unexpected error: ${e.message}")
+        }
+    }
+    
+    /**
+     * Downloads transaction receipt in base64 format
+     * @param transactionRefNo Transaction reference number
+     * @param listener Callback interface to handle success/failure responses
+     */
+    suspend fun getTransactionReceipt(
+        transactionRefNo: String,
+        listener: TransactionReceiptListener
+    ) {
+        try {
+            val apiService = RetrofitClient.retrofit.create(ApiService::class.java)
+            
+            // Get access token
+            val token: String = getAccessTokenForTransaction()
+            
+            val response = withContext(Dispatchers.IO) {
+                apiService.getTransactionReceipt(
+                    authorization = "Bearer $token",
+                    requestId = (SessionManager.username ?: "") + "-" + RequestId.generateRequestId(),
+                    sender = SessionManager.username ?: "",
+                    transactionRefNumber = transactionRefNo
+                ).execute()
+            }
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                if (responseBody != null) {
+                    listener.onSuccess(responseBody)
+                } else {
+                    listener.onFailed("Response body is null")
+                }
+            } else {
+                listener.onFailed("Error: ${response.errorBody()?.string() ?: "Unknown error"}")
+            }
+        } catch (e: Exception) {
+            listener.onFailed("Unexpected error: ${e.message}")
+        }
+    }
+    
+    /**
+     * Updates transaction status from external partner systems
+     * @param transactionRefNo Transaction reference number
+     * @param status New status
+     * @param listener Callback interface to handle success/failure responses
+     */
+    suspend fun updateTransactionStatus(
+        transactionRefNo: String,
+        status: String,
+        listener: StatusUpdateListener
+    ) {
+        try {
+            val apiService = RetrofitClient.retrofit.create(ApiService::class.java)
+            
+            val request = StatusUpdateRequest(
+                transaction_ref_number = transactionRefNo,
+                status = status
+            )
+            
+            // Get access token
+            val token: String = getAccessTokenForTransaction()
+            
+            val response = withContext(Dispatchers.IO) {
+                apiService.updateTransactionStatus(
+                    authorization = "Bearer $token",
+                    requestId = (SessionManager.username ?: "") + "-" + RequestId.generateRequestId(),
+                    sender = SessionManager.username ?: "",
+                    request = request
+                ).execute()
+            }
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                if (responseBody != null) {
+                    listener.onSuccess(responseBody)
+                } else {
+                    listener.onFailed("Response body is null")
+                }
+            } else {
+                listener.onFailed("Error: ${response.errorBody()?.string() ?: "Unknown error"}")
+            }
+        } catch (e: Exception) {
+            listener.onFailed("Unexpected error: ${e.message}")
+        }
+    }
+    
+    /**
+     * Tracks transaction status in real-time
+     * @param transactionRefNo Transaction reference number
+     * @param listener Callback interface to handle success/failure responses
+     */
+    suspend fun trackTransactionRealTime(
+        transactionRefNo: String,
+        listener: TransactionTrackingListener
+    ) {
+        try {
+            val apiService = RetrofitClient.retrofit.create(ApiService::class.java)
+            
+            // Get access token
+            val token: String = getAccessTokenForTransaction()
+            
+            val response = withContext(Dispatchers.IO) {
+                apiService.trackTransactionRealTime(
+                    authorization = "Bearer $token",
+                    requestId = (SessionManager.username ?: "") + "-" + RequestId.generateRequestId(),
+                    transactionRefNumber = transactionRefNo
+                ).execute()
+            }
+            
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                if (responseBody != null) {
+                    listener.onSuccess(responseBody)
+                } else {
+                    listener.onFailed("Response body is null")
+                }
+            } else {
+                listener.onFailed("Error: ${response.errorBody()?.string() ?: "Unknown error"}")
+            }
+        } catch (e: Exception) {
+            listener.onFailed("Unexpected error: ${e.message}")
+        }
+    }
+    
+    /**
+     * Helper method to get access token for transactions
+     */
+    private suspend fun getAccessTokenForTransaction(): String {
+        return if (!Timer.isRunning) {
+            val result = AccessToken.getAccessToken(
+                username = SessionManager.username ?: "",
+                password = SessionManager.password ?: "",
+                requestId = (SessionManager.username ?: "") + "-" + RequestId.generateRequestId(),
+                grantType = SessionManager.grantType ?: "password",
+                clientId = SessionManager.clientId ?: "cdp_app",
+                scope = SessionManager.scope,
+                clientSecret = SessionManager.clientSecret ?: "mSh18BPiMZeQqFfOvWhgv8wzvnNVbj3Y"
+            )
+            
+            val error = result.exceptionOrNull()
+            if (error != null) {
+                throw Exception(error.message ?: "Error occurred getting access token")
+            }
+            
+            val newToken = result.getOrNull()?.access_token
+            if (newToken.isNullOrEmpty()) {
+                throw Exception("Access token is null or empty")
+            }
+            
+            AccessToken.access_token = newToken
+            newToken
+        } else {
+            AccessToken.access_token
+        }
+    }
+
   }
 }

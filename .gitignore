@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Exclude node_modules in automated-build-system
+/automated-build-system/node_modules/

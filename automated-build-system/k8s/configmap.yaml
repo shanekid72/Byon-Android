@@ -1,0 +1,152 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lulupay-config
+  namespace: lulupay-production
+  labels:
+    app: lulupay-build-system
+    component: config
+    environment: production
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  
+  # Build System Configuration
+  BUILD_STORAGE_PATH: "/app/storage/builds"
+  TEMP_BUILD_PATH: "/app/storage/temp"
+  ASSET_STORAGE_PATH: "/app/storage/assets"
+  MAX_CONCURRENT_BUILDS: "10"
+  BUILD_TIMEOUT: "1800000"
+  
+  # Asset Processing Configuration
+  ASSET_PROCESSING_TIMEOUT: "300000"
+  MAX_ASSET_SIZE: "10485760"
+  SUPPORTED_FORMATS: "png,jpg,jpeg,webp,svg"
+  ENABLE_ASSET_OPTIMIZATION: "true"
+  QUALITY_THRESHOLD: "85"
+  
+  # Database Configuration
+  DB_HOST: "postgresql-service"
+  DB_PORT: "5432"
+  DB_NAME: "lulupay_production"
+  DB_POOL_MIN: "2"
+  DB_POOL_MAX: "20"
+  DB_TIMEOUT: "30000"
+  
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_TIMEOUT: "5000"
+  CACHE_TTL: "3600"
+  
+  # API Configuration
+  API_RATE_LIMIT_WINDOW: "900000"
+  API_RATE_LIMIT_MAX: "1000"
+  CORS_ORIGIN: "*"
+  API_TIMEOUT: "30000"
+  
+  # Asset Pipeline Configuration
+  PIPELINE_MAX_PROCESSING_TIME: "120000"
+  PIPELINE_QUALITY_THRESHOLD: "85"
+  PIPELINE_ENABLE_OPTIMIZATION: "true"
+  PIPELINE_OUTPUT_FORMATS: "png,webp"
+  PIPELINE_COMPRESSION_LEVEL: "9"
+  
+  # Build Configuration
+  ANDROID_SDK_PATH: "/opt/android-sdk"
+  GRADLE_HOME: "/opt/gradle"
+  JAVA_HOME: "/opt/java"
+  DOCKER_SOCKET: "/var/run/docker.sock"
+  
+  # Monitoring Configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_INTERVAL: "30000"
+  
+  # Security Configuration
+  ENABLE_HELMET: "true"
+  ENABLE_CORS: "true"
+  TRUST_PROXY: "true"
+  SESSION_SECURE: "true"
+  
+  # Cloud Configuration
+  CLOUD_PROVIDER: "aws"
+  CDN_ENABLED: "true"
+  EDGE_CACHING: "true"
+  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lulupay-config-staging
+  namespace: lulupay-staging
+  labels:
+    app: lulupay-build-system
+    component: config
+    environment: staging
+data:
+  # Application Configuration
+  NODE_ENV: "staging"
+  PORT: "3000"
+  LOG_LEVEL: "debug"
+  
+  # Build System Configuration
+  BUILD_STORAGE_PATH: "/app/storage/builds"
+  TEMP_BUILD_PATH: "/app/storage/temp"
+  ASSET_STORAGE_PATH: "/app/storage/assets"
+  MAX_CONCURRENT_BUILDS: "5"
+  BUILD_TIMEOUT: "1800000"
+  
+  # Asset Processing Configuration
+  ASSET_PROCESSING_TIMEOUT: "300000"
+  MAX_ASSET_SIZE: "10485760"
+  SUPPORTED_FORMATS: "png,jpg,jpeg,webp,svg"
+  ENABLE_ASSET_OPTIMIZATION: "true"
+  QUALITY_THRESHOLD: "80"
+  
+  # Database Configuration
+  DB_HOST: "postgresql-service-staging"
+  DB_PORT: "5432"
+  DB_NAME: "lulupay_staging"
+  DB_POOL_MIN: "1"
+  DB_POOL_MAX: "10"
+  DB_TIMEOUT: "30000"
+  
+  # Redis Configuration
+  REDIS_HOST: "redis-service-staging"
+  REDIS_PORT: "6379"
+  REDIS_DB: "1"
+  REDIS_TIMEOUT: "5000"
+  CACHE_TTL: "1800"
+  
+  # API Configuration
+  API_RATE_LIMIT_WINDOW: "900000"
+  API_RATE_LIMIT_MAX: "500"
+  CORS_ORIGIN: "*"
+  API_TIMEOUT: "30000"
+  
+  # Asset Pipeline Configuration
+  PIPELINE_MAX_PROCESSING_TIME: "120000"
+  PIPELINE_QUALITY_THRESHOLD: "80"
+  PIPELINE_ENABLE_OPTIMIZATION: "true"
+  PIPELINE_OUTPUT_FORMATS: "png,webp"
+  PIPELINE_COMPRESSION_LEVEL: "7"
+  
+  # Monitoring Configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_INTERVAL: "30000"
+  
+  # Security Configuration
+  ENABLE_HELMET: "true"
+  ENABLE_CORS: "true"
+  TRUST_PROXY: "true"
+  SESSION_SECURE: "false"
+  
+  # Cloud Configuration
+  CLOUD_PROVIDER: "aws"
+  CDN_ENABLED: "false"
+  EDGE_CACHING: "false" 
