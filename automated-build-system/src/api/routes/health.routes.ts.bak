@@ -1,0 +1,40 @@
+import { Router } from 'express'
+import { checkMongoHealth, checkRedisHealth } from '../../utils/database'
+
+const router = Router()
+
+router.get('/', async (req, res) => {
+  res.json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'LuluPay Build System'
+  })
+})
+
+router.get('/detailed', async (req, res) => {
+  try {
+    const [mongo, redis] = await Promise.all([
+      checkMongoHealth(),
+      checkRedisHealth()
+    ])
+
+    res.json({
+      success: true,
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        mongodb: mongo,
+        redis: redis
+      }
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Health check failed',
+      timestamp: new Date().toISOString()
+    })
+  }
+})
+
+export { router as healthRoutes } 

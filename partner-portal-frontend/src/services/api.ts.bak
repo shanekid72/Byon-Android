@@ -1,0 +1,122 @@
+import axios, { AxiosInstance, AxiosResponse } from 'axios'
+import { apiConfig } from '../config/api.config'
+
+// Create axios instance using configuration
+export const apiClient: AxiosInstance = axios.create({
+  // With the Vite proxy configuration, we need to use /api
+  // The proxy will rewrite /api to an empty string when forwarding to http://localhost:8080
+  baseURL: '/api',
+  timeout: apiConfig.timeout,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+})
+
+// Request interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    // Add auth token if available
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`)
+    return config
+  },
+  (error) => {
+    console.error('❌ API Request Error:', error)
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor
+apiClient.interceptors.response.use(
+  (response: AxiosResponse) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`)
+    return response
+  },
+  (error) => {
+    console.error('❌ API Response Error:', error.response?.status, error.response?.data)
+    
+    // Handle common error cases
+    if (error.response?.status === 401) {
+      // Handle unauthorized - redirect to login
+      localStorage.removeItem('auth_token')
+      // Don't redirect automatically - let the component handle this
+      // window.location.href = '/login'
+      console.warn('Authentication token expired or invalid')
+    }
+    
+    return Promise.reject(error)
+  }
+)
+
+// API Response types
+export interface ApiResponse<T = any> {
+  success: boolean
+  data?: T
+  message?: string
+  error?: string
+}
+
+// Health check function
+export const checkBackendHealth = async (): Promise<boolean> => {
+  console.log('Checking backend health...');
+  
+  try {
+    // Try direct fetch to the backend without using the proxy
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/health', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          // Add CORS headers if needed
+          'Origin': window.location.origin
+        }
+      });
+      
+      if (response.ok) {
+        console.log('Backend health check successful with direct fetch');
+        return true;
+      } else {
+        throw new Error(`Health check failed with status: ${response.status}`);
+      }
+    } catch (directFetchError) {
+      console.warn('Health check failed with direct fetch, trying apiClient:', directFetchError);
+      
+      // Fallback to apiClient if direct fetch fails
+      try {
+        await apiClient.get('/v1/health');
+        console.log('Backend health check successful with apiClient');
+        return true;
+      } catch (apiClientError) {
+        console.warn('Health check failed with apiClient, trying fetch API:', apiClientError);
+        
+        // Fallback to fetch API with proxy if apiClient fails
+        const response = await fetch('/api/v1/health', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (response.ok) {
+          console.log('Backend health check successful with fetch API');
+          return true;
+        } else {
+          console.error('Backend health check failed with status:', response.status);
+          return false;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Backend health check completely failed:', error);
+    return false;
+  }
+}
+
+export default apiClient 
