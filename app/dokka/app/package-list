@@ -1,0 +1,7 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:com.example.myapplication1////PointingToDeclaration/app/com.example.myapplication1/index.html
+$dokka.location:com.example.myapplication1/MainActivity///PointingToDeclaration/app/com.example.myapplication1/-main-activity/index.html
+$dokka.location:com.example.myapplication1/MainActivity/MainActivity/#/PointingToDeclaration/app/com.example.myapplication1/-main-activity/-main-activity.html
+com.example.myapplication1
+

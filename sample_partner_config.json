@@ -1,0 +1,28 @@
+{
+  "partnerId": "first_national_bank",
+  "partnerName": "First National Bank",
+  "appName": "First National Money Transfer",
+  "packageName": "com.firstnational.remittance",
+  "primaryColor": "#1E3A8A",
+  "secondaryColor": "#F59E0B",
+  "apiConfig": {
+    "baseUrl": "https://api.lulupay.com",
+    "apiKey": "your_api_key_here",
+    "clientId": "your_client_id",
+    "clientSecret": "your_client_secret"
+  },
+  "brandConfig": {
+    "backgroundColor": "#FFFFFF",
+    "textColor": "#000000",
+    "supportDarkMode": true,
+    "buttonRadius": "8dp",
+    "cardRadius": "12dp"
+  },
+  "features": [
+    "remittance",
+    "history", 
+    "support"
+  ],
+  "buildApp": true,
+  "cleanup": false
+} 

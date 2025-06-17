@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:background="@color/blue"
+    android:id="@+id/main">
+
+    <RelativeLayout
+        android:layout_height="100dp"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginLeft="10dp"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageButton
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:src="@drawable/back_icon"
+            android:background="@drawable/custom_button_back"
+            android:layout_centerVertical="true"
+            app:tint="@color/black"
+            android:backgroundTint="@color/white"
+            android:layout_marginLeft="24dp"
+            android:layout_alignParentStart="true"
+            android:paddingHorizontal="20dp"
+            android:id="@+id/back_button" />
+
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_centerInParent="true"
+            android:textSize="24sp"
+            android:textColor="@color/white"
+            android:id="@+id/transaction_history_text"
+            android:text="Transaction Status"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+    <include
+        layout="@layout/remittance_history"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="100dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

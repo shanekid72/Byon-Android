@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Lulupay</string>
+    <string name="start_your_payment">Start your payment</string>
+    <string name="hello_user">Hello user!</string>
+</resources>

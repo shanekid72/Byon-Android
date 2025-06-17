@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_height="match_parent"
+     android:layout_width="match_parent"
+     android:background="@drawable/bottom_sheet_background">
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         app:layout_constraintTop_toTopOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         android:textSize="20sp"
+         android:textColor="@color/black"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="16dp"
+         android:id="@+id/headerText"
+         android:text="Send"
+         android:textStyle="bold" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+         android:layout_height="100dp"
+         android:layout_width="100dp"
+         android:src="@drawable/ic_profile_placeholder"
+         app:shapeAppearanceOverlay="@style/roundedImageViewRounded"
+         app:layout_constraintStart_toStartOf="parent"
+         app:strokeWidth="1dp"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="20dp"
+         app:layout_constraintTop_toBottomOf="@id/headerText"
+         android:id="@+id/profileImage" />
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         app:layout_constraintStart_toStartOf="parent"
+         android:textSize="18sp"
+         android:textColor="@color/black"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="8dp"
+         app:layout_constraintTop_toBottomOf="@id/profileImage"
+         android:id="@+id/contactName"
+         android:text="Jessica Pearson"
+         android:textStyle="bold" />
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         app:layout_constraintStart_toStartOf="parent"
+         android:textSize="14sp"
+         android:textColor="@color/gray"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="4dp"
+         app:layout_constraintTop_toBottomOf="@id/contactName"
+         android:id="@+id/accountInfo"
+         android:text="from Instant Account" />
+
+    <View
+         android:layout_height="100dp"
+         android:layout_width="1dp"
+         android:background="@color/gray"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="16dp"
+         app:layout_constraintTop_toBottomOf="@id/accountInfo"
+         android:id="@+id/longline" />
+
+    <ImageView
+         android:layout_height="50dp"
+         android:layout_width="50dp"
+         android:src="@drawable/ic_money_bag"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="16dp"
+         app:layout_constraintTop_toBottomOf="@id/longline"
+         android:id="@+id/moneyBagIcon" />
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         app:layout_constraintStart_toStartOf="parent"
+         android:textSize="24sp"
+         android:textColor="@color/black"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="8dp"
+         app:layout_constraintTop_toBottomOf="@id/moneyBagIcon"
+         android:id="@+id/amountText"
+         android:text="₹405"
+         android:textStyle="bold" />
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         app:layout_constraintStart_toStartOf="parent"
+         android:textSize="14sp"
+         android:textColor="@color/gray"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toBottomOf="@id/amountText"
+         android:id="@+id/referenceText"
+         android:text="Uber" />
+
+    <TextView
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         app:layout_constraintStart_toStartOf="parent"
+         android:textSize="14sp"
+         android:textColor="@color/gray"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toBottomOf="@id/referenceText"
+         android:id="@+id/dateTimeText"
+         android:text="Today, 10:45 PM" />
+
+    <LinearLayout
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:layout_marginBottom="16dp"
+         android:layout_marginHorizontal="60dp"
+         android:orientation="horizontal"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         android:layout_marginTop="32dp"
+         app:layout_constraintTop_toBottomOf="@id/dateTimeText">
+
+        <Button
+             android:layout_height="56dp"
+             android:layout_width="0dp"
+             android:background="@drawable/custom_edit_text"
+             android:layout_marginHorizontal="5dp"
+             android:textSize="16sp"
+             android:textColor="@color/black"
+             android:layout_weight="1"
+             android:id="@+id/cancelButton"
+             android:text="Cancel" />
+
+        <Button
+             android:layout_height="56dp"
+             android:layout_width="0dp"
+             android:background="@drawable/custom_button_back"
+             android:layout_marginHorizontal="5dp"
+             android:textSize="16sp"
+             android:backgroundTint="@color/blue"
+             android:textColor="@color/white"
+             android:layout_marginStart="8dp"
+             android:layout_weight="1"
+             android:id="@+id/payButton"
+             android:text="Pay ₹405" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

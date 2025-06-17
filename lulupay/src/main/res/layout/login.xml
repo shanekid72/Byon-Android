@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:id="@+id/main"
+    android:layout_margin="10dp"
+        tools:context="com.sdk.lulupay.activity.LoginScreen">
+
+        <!-- Logo -->
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="40dp"
+            android:contentDescription="logo for PP"
+            android:src="@drawable/logo" />
+
+        <!-- Email Input -->
+        <EditText
+            android:id="@+id/username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/logo"
+            android:layout_marginTop="40dp"
+            android:hint="Username"
+            android:background="@drawable/custom_edit_text"
+            android:inputType="text"
+            android:padding="18dp" />
+
+        <!-- Password Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/passwordLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/username"
+        android:layout_marginTop="26dp"
+        app:passwordToggleEnabled="true"
+        app:hintEnabled="false">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:background="@drawable/custom_edit_text"
+            android:inputType="textPassword"
+            android:padding="18dp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <Button
+        android:id="@+id/login_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/passwordLayout"
+        android:layout_alignEnd="@+id/passwordLayout"
+        android:layout_alignParentStart="true"
+
+        android:layout_marginTop="24dp"
+        android:background="@drawable/custom_button_back"
+        android:padding="18dp"
+        android:text="Log in"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+    </RelativeLayout>

@@ -1,0 +1,71 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.LuLuBanking" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#05A8E4</item>
+        <item name="colorPrimaryContainer">#0056b3</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+
+        <item name="colorSurface">#FFFFFF</item> <!-- Light mode background -->
+        <item name="colorOnSurface">#000000</item> <!-- Text color -->
+
+    </style>
+
+
+    <style name="Theme.LuLuBanking" parent="Base.Theme.LuLuBanking" />
+
+    <style name="roundedImageViewRounded">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="FullScreenBottomSheetDialog" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/FullScreenBottomSheetStyle</item>
+    </style>
+
+    <style name="FullScreenBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="behavior_peekHeight">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
+    <style name="TransparentDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
+    <style name="LightTheme" parent="Base.Theme.LuLuBanking">
+        <!-- Define your light theme colors here -->
+    </style>
+
+    <style name="DarkTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary Colors -->
+        <item name="colorPrimary">#05A8E4</item>
+        <item name="colorPrimaryContainer">#003C74</item> <!-- Darker version -->
+        <item name="colorOnPrimary">#FFFFFF</item>
+
+        <!-- Secondary Colors -->
+        <item name="colorSecondary">#03DAC5</item>
+        <item name="colorOnSecondary">#000000</item>
+
+        <!-- Background & Surface -->
+        <item name="colorSurface">#121212</item> <!-- Main background color -->
+        <item name="colorOnSurface">#E0E0E0</item> <!-- Text/icons on dark background -->
+
+        <item name="colorSurfaceVariant">#1E1E1E</item> <!-- Slightly lighter than surface -->
+        <item name="colorOnSurfaceVariant">#FFFFFF</item>
+
+        <!-- Error Colors -->
+        <item name="colorError">#CF6679</item>
+        <item name="colorOnError">#000000</item>
+
+        <!-- Status Bar & Navigation Bar -->
+        <item name="android:statusBarColor">#121212</item>
+        <item name="android:navigationBarColor">#121212</item>
+    </style>
+
+    <style name="ThemeOverlay_CustomTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#05A8E4</item>
+        <item name="colorPrimaryVariant">#0056b3</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+    </style>
+
+</resources>

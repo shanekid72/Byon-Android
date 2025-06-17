@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Base.Theme.LuLuBanking" parent="Theme.Material3.DayNight.NoActionBar">
+            <item name="colorPrimary">#05A8E4</item>
+            <item name="colorPrimaryContainer">#0056b3</item>
+            <item name="colorOnPrimary">#FFFFFF</item>
+
+            <item name="colorSurface">#FFFFFF</item> <!-- Light mode background -->
+            <item name="colorOnSurface">#000000</item> <!-- Text color -->
+
+            <item name="android:forceDarkAllowed">false</item> <!-- Prevents forced dark mode -->
+
+    </style>
+</resources>
